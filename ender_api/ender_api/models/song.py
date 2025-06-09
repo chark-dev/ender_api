@@ -1,4 +1,4 @@
-from ender_api.models.db import db
+from ender_api.models.db import db  # 
 
 class Song(db.Model):
     id = db.Column(db.Integer, primary_key = True)

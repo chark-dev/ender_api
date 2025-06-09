@@ -8,6 +8,11 @@ flask = "*"
 flask-sqlalchemy = "*"
 flask-cors = "*"
 
+[scripts]
+seed = "python3 seed.py"
+dev = "PYTHONPATH=./ pipenv run python ender_api/seed.py"
+
+
 [dev-packages]
 
 [requires]

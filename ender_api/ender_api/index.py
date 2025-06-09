@@ -1,32 +1,43 @@
 from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from ender_api.models.db import db
+from pathlib import Path
+from ender_api.models.db import db  #
 from ender_api.models.song import Song 
+from ender_api.models.user import User 
 
-app = Flask(__name__)
-CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///songs.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+app = Flask(__name__, instance_relative_config=True)
+
+# Make sure instance folder exists
+Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+
+# Define absolute path to DB inside instance folder
+db_path = Path(app.instance_path) / "ender.db"
+
+# Apply database config
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Initialize db
 db.init_app(app)
 
+cors = CORS(app)
 
 
 
-users = [
-    {
-        'name': 'Dinosaur',
-        'url': 'google.com',
-        'id': 1
-    },
-    {
-        'name': 'The Mirror',
-        'url': 'mirror.com',
-        'id': 2
-    }
-]
+# users = [
+#     {
+#         'name': 'Dinosaur',
+#         'url': 'google.com',
+#         'id': 1
+#     },
+#     {
+#         'name': 'The Mirror',
+#         'url': 'mirror.com',
+#         'id': 2
+#     }
+# ]
 
 @app.route("/songs/")
 def get_songs():
@@ -57,32 +68,38 @@ def get_song(song_id):
 #  Users Endpoint
 @app.route("/users/")
 def get_users():
-    return jsonify(users)
+    users = User.query.all()
+    
+    print(users)
+    
+    return jsonify([user.to_dict() for user in users])
 
-@app.route("/users/<int:user_id>", methods=['GET'])
-def get_user(user_id):
-    return jsonify(users)
+# @app.route("/users/<int:user_id>", methods=['GET'])
+# def get_user(user_id):
+#     return jsonify(users)
 
 
 # Login Endpoint
 @app.route("/login/", methods=["POST"])
 def login():
     data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    input_username = data.get("username")
+    input_password = data.get("password")
     
-    if username == "charlie" and password == "password":
-        print("Success")
-        return jsonify({"message": "Login Successful"}), 200
+    user = User.query.filter_by(username=input_username, password=input_password).first()
+    
+
+    if user:
+        return jsonify({"username": input_username, "password": input_password}), 200
     else: 
         print("Failure")
         return jsonify({"message": "Invalid Credentials"}), 401
 
 #  Cookies Endpoint
-@app.route("/users")
-def get_cookiers():
-    return jsonify(users)
+# @app.route("/users")
+# def get_cookiers():
+#     return jsonify(users)
 
-@app.route("/users/<int:user_id>", methods=['GET'])
-def get_cookie(user_id):
-    return jsonify(users)
+# @app.route("/users/<int:user_id>", methods=['GET'])
+# def get_cookie(user_id):
+#     return jsonify(users)
