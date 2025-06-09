@@ -1,13 +1,14 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file, abort
 from flask_cors import CORS
 from pathlib import Path
 from ender_api.models.db import db  #
 from ender_api.models.song import Song 
 from ender_api.models.user import User 
-
+import os
 
 
 app = Flask(__name__, instance_relative_config=True)
+AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'audio')
 
 # Make sure instance folder exists
 Path(app.instance_path).mkdir(parents=True, exist_ok=True)
@@ -26,18 +27,21 @@ cors = CORS(app)
 
 
 
-# users = [
-#     {
-#         'name': 'Dinosaur',
-#         'url': 'google.com',
-#         'id': 1
-#     },
-#     {
-#         'name': 'The Mirror',
-#         'url': 'mirror.com',
-#         'id': 2
-#     }
-# ]
+@app.route("/audio/<filename>")
+def serve_audio(filename):
+    safe_path = os.path.join(AUDIO_DIR, os.path.basename(filename))
+    
+    print(safe_path)
+    
+    if not os.path.exists(safe_path):
+        abort(404)
+        
+    return send_file(
+        safe_path,
+        mimetype="audio/mpeg",
+        as_attachment=False,
+        conditional=True
+    )
 
 @app.route("/songs/")
 def get_songs():
